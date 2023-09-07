@@ -1,6 +1,22 @@
 const ec = require("elliptic").ec;
 const forge = require("node-forge");
 const curve = new ec("curve25519");
+const elliptic = require("elliptic");
+
+function encodePublicArray(public){
+    return public.map(x => {
+        x = x.toString(16);
+        x = x.padStart(2, "0");
+        return x;
+    }).join("");
+}
+
+function decodePublic(public){
+    return public.match(/([a-z0-9]){0,2}/g).map(x => parseInt(x, 16)).filter(x => !isNaN(x));
+}
+
+
+
 class KeyPair{
     /**
      * 
@@ -9,7 +25,7 @@ class KeyPair{
     constructor(importedKey){
         if(importedKey && typeof importedKey != "string") throw new Error("Invalid argument type"); 
         const pair = importedKey ? curve.keyFromPrivate(importedKey) : curve.genKeyPair();
-        this.publicKey = pair.getPublic().encode("hex");
+        this.publicKey = encodePublicArray(pair.getPublic().encode("array"));
         this.privateKey = pair.getPrivate().toString("hex");
         this.masterKey = pair.derive(pair.getPublic()).toString("hex");
     }
@@ -67,6 +83,21 @@ class KeyPair{
         aes.update(forge.util.createBuffer(this.privateKey));
         aes.finish();
         return `${forge.util.encode64(aes.output.data)}.${forge.util.encode64(iv)}.${forge.util.encode64(salt)}}`
+    }
+
+    /**
+     * 
+     * @param {String} sessionKey - Public key to be computed 
+     * @returns {String} Master key shared between 2 KeyPairs
+     */
+    computeKey(sessionKey){
+        if(!sessionKey) throw new Error("No argument was passed");
+        if(typeof sessionKey != "string") throw new Error("Invalid argument type");
+        const pair = curve.keyFromPrivate(this.privateKey);
+        const curveSession = new ec("curve25519");
+        const session = curveSession.keyFromPublic(decodePublic(sessionKey));
+        const publi = session.getPublic();
+        return pair.derive(publi).toString("hex");
     }
 }
 
