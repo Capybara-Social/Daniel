@@ -1,18 +1,20 @@
+
+
 const ec = require("elliptic").ec;
 const forge = require("node-forge");
 const curve = new ec("curve25519");
 const elliptic = require("elliptic");
 
-function encodePublicArray(public){
-    return public.map(x => {
+function encodePublicArray(publicKey){
+    return publicKey.map(x => {
         x = x.toString(16);
         x = x.padStart(2, "0");
         return x;
     }).join("");
 }
 
-function decodePublic(public){
-    return public.match(/([a-z0-9]){0,2}/g).map(x => parseInt(x, 16)).filter(x => !isNaN(x));
+function decodePublic(publicKey){
+    return publicKey.match(/([a-z0-9]){0,2}/g).map(x => parseInt(x, 16)).filter(x => !isNaN(x));
 }
 
 
@@ -36,7 +38,7 @@ class KeyPair{
      * @returns {String} Encrypted String
      */
     encrypt(plaintext){
-        if(!plaintext) throw new Error("No argument was passed")
+        if(!plaintext) throw new Error("No argument was passed");
         const salt = forge.random.getBytesSync(16);
         const key = forge.pkcs5.pbkdf2(this.masterKey, salt, 100e3, 16);
         const aes = forge.cipher.createCipher('AES-CBC', key);
@@ -119,8 +121,7 @@ function decryptKey(encoded, password){
     aes.start({iv});
     aes.update(forge.util.createBuffer(forge.util.decode64(encoded[0])));
     aes.finish();
-    return aes.output.data
+    return aes.output.data; 
 }
 
-module.exports = {decryptKey, KeyPair}
-
+ module.exports = {decryptKey, KeyPair}
