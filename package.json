@@ -1,8 +1,9 @@
 {
   "name": "@capybara-social/daniel",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "description": "The standard package for encrypting and decrypting for Capybara Clients",
-  "main": "index.js",
+  "main": "index.cjs",
+  "type": "commonjs",
   "scripts": {
     "test": "npx webpack --watch --mode=\"development\"",
     "build": "npx webpack --mode=\"production\""
@@ -14,22 +15,19 @@
     "capybara"
   ],
   "author": "Capybara",
-  "license": "CC-BY-2.0",
+  "license": "CC-BY-SA-4.0",
   "devDependencies": {
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "@capybara-social/daniel": "^1.0.3",
     "elliptic": "^6.5.4",
     "node-forge": "^1.3.1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Capybara-Social/Daniel.git"
-  },
+  "repository": "git+https://github.com/Capybara-Social/Daniel.git",
   "bugs": {
     "url": "https://github.com/Capybara-Social/Daniel/issues"
   },
-  "homepage": "https://github.com/Capybara-Social/Daniel#readme"
+  "homepage": "https://github.com/Capybara-Social/Daniel#readme",
+  "private": false
 }
