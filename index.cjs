@@ -1,5 +1,4 @@
-
-
+'use strict'
 const ec = require("elliptic").ec;
 const forge = require("node-forge");
 const curve = new ec("curve25519");
@@ -46,7 +45,7 @@ class KeyPair{
         aes.start({iv});
         aes.update(forge.util.createBuffer(plaintext));
         aes.finish();
-        return `${forge.util.encode64(aes.output.data)}.${forge.util.encode64(iv)}.${forge.util.encode64(salt)}}`
+        return `${forge.util.encode64(aes.output.data)}.${forge.util.encode64(iv)}.${forge.util.encode64(salt)}`
     }
 
     /**
@@ -103,13 +102,34 @@ class KeyPair{
     }
 }
 
+
 /**
  * 
- * @param {String} encoded - Encrypted private key
- * @param {String} password - Password used to decrypt the key
- * @returns {String} Decrypted private key
+ * @param {String} plaintext Text that is going to be encrypted
+ * @param {String} password Password that will be used to encrypt the String
+ * @returns {String} Encrypted String
  */
-function decryptKey(encoded, password){
+function encryptWithPassword(plaintext, password){
+    if(!password || !plaintext) throw new Error("Expected 2 arguments");
+    if(typeof plaintext != "string") throw new Error("Invalid first argument type");
+    if(typeof password != "string") throw new Error("Invalid second argument type");
+    const salt = forge.random.getBytesSync(16);
+    const key = forge.pkcs5.pbkdf2(password, salt, 100e3, 16);
+    const aes = forge.cipher.createCipher('AES-CBC', key);
+    const iv = forge.random.getBytesSync(16);
+    aes.start({iv});
+    aes.update(forge.util.createBuffer(plaintext));
+    aes.finish();
+    return `${forge.util.encode64(aes.output.data)}.${forge.util.encode64(iv)}.${forge.util.encode64(salt)}`;
+}
+
+/**
+ * 
+ * @param {String} encoded Encrypted String
+ * @param {String} password The password to decrypt the encrypted String
+ * @returns {String} Decrypted String
+ */
+function decryptWithPassword(encoded, password){
     if(!encoded || !password) throw new Error("Expected 2 arguments");
     if(typeof encoded != "string") throw new Error("Invalid first argument type");
     if(typeof password != "string") throw new Error("Invalid second argument type");
@@ -124,4 +144,15 @@ function decryptKey(encoded, password){
     return aes.output.data; 
 }
 
- module.exports = {decryptKey, KeyPair}
+/**
+ * 
+ * @param {String} encoded - Encrypted private key
+ * @param {String} password - Password used to decrypt the key
+ * @returns {String} Decrypted private key
+ */
+function decryptKey(encoded, password){
+    return decryptWithPassword(encoded, password);
+}
+
+
+ module.exports = {decryptKey, KeyPair, encryptWithPassword, decryptWithPassword}
