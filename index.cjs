@@ -97,7 +97,7 @@ class KeyPair{
             aes.start({iv});
             aes.update(forge.util.createBuffer(this.privateKey));
             aes.finish();
-            resolve(`${forge.util.encode64(aes.output.data)}.${forge.util.encode64(iv)}.${forge.util.encode64(salt)}}`);
+            resolve(`${forge.util.encode64(aes.output.data)}.${forge.util.encode64(iv)}.${forge.util.encode64(salt)}`);
             }catch(e){
                 reject(e)
             }
