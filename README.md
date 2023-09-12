@@ -33,7 +33,7 @@ const { KeyPair } = require("@capybara-social/daniel");
 import { KeyPair } from "@capybara-social/daniel"
 ```
 
-## Usage
+## Keypairs
 
 Capybara uses a hybrid encryption system between ECC(with Curve25519) and AES256-CBC
 
@@ -53,7 +53,7 @@ This is the function you have to use to encrypt the private information of the u
 ```js
 const myKeys = new KeyPair();
 const myInfo = "This text is going to be encrypted!";
-let encrypted = myKeys.encrypt(myInfo); // => this returns the encrypted text
+let encrypted = await myKeys.encrypt(myInfo); // => this returns the encrypted text
 
 //Once encrypted you can send this info to the server
 ```
@@ -62,13 +62,13 @@ let encrypted = myKeys.encrypt(myInfo); // => this returns the encrypted text
 
 This is the function you have to use to decrypt the private information of the user. The decrypted info can NOT be saved anywhere. 
 ```js
-let decrypted = myKeys.decrypt(encrypted) // => this returns the decrypted text or throw an error 
+let decrypted = await myKeys.decrypt(encrypted) // => this returns the decrypted text or throw an error 
 ```
 ### Encrypting private key
 This function will encrypt the private key with a password(the user's password).
 ```js
 const userPassword = "Really really secret password!";
-let encryptedKey = myKeys.encryptKey(userPassword);
+let encryptedKey = await myKeys.encryptKey(userPassword);
 ``` 
 
 ### Decrypting private key
@@ -83,10 +83,38 @@ const {decryptKey} = require("@capybara-social/daniel");
 import {decryptKey} from "@capybara-social/daniel"
 ```
 
+
+#### Decryption
 ```js
 const encryptedPrivateKey = "ThisIsMyEncryptedPrivateKey!";
 const password = "CapybaraIsSexy123";
-let decryptedKey = decryptKey(encryptedPrivateKey, password);
+let decryptedKey = await decryptKey(encryptedPrivateKey, password);
+```
+
+## Encrypting and decrypting with password
+
+For this you will have to import 2 function
+#### CommonJS
+```js
+const {encryptWithPassword, decryptWithPassword} = require("@capybara-social/daniel");
+```
+#### ES
+```js
+import {encryptWithPassword, decryptWithPassword} from "@capybara-social/daniel"
+```
+
+
+### Encrypting
+```js
+const content = "Omg I don't want anyone to see this!";
+const password = "CapybaraIsSexy123";
+let encrypted = await encryptWithPassword(content, password);
+```
+
+### Decrypting
+```js
+const password = "CapybaraIsSexy123";
+let decrypted = await decryptWithPassword(encrypted, password);
 ```
 
 ## Dependencies

@@ -36,16 +36,22 @@ class KeyPair{
      * @param {String} plaintext - String to encrypt
      * @returns {String} Encrypted String
      */
-    encrypt(plaintext){
+    async encrypt(plaintext){
         if(!plaintext) throw new Error("No argument was passed");
-        const salt = forge.random.getBytesSync(16);
-        const key = forge.pkcs5.pbkdf2(this.masterKey, salt, 100e3, 16);
-        const aes = forge.cipher.createCipher('AES-CBC', key);
-        const iv = forge.random.getBytesSync(16);
-        aes.start({iv});
-        aes.update(forge.util.createBuffer(plaintext));
-        aes.finish();
-        return `${forge.util.encode64(aes.output.data)}.${forge.util.encode64(iv)}.${forge.util.encode64(salt)}`
+        return new Promise((resolve, reject) => {
+            try{
+                const salt = forge.random.getBytesSync(16);
+                const key = forge.pkcs5.pbkdf2(this.masterKey, salt, 100e3, 16);
+                const aes = forge.cipher.createCipher('AES-CBC', key);
+                const iv = forge.random.getBytesSync(16);
+                aes.start({iv});
+                aes.update(forge.util.createBuffer(plaintext));
+                aes.finish();
+                resolve(`${forge.util.encode64(aes.output.data)}.${forge.util.encode64(iv)}.${forge.util.encode64(salt)}`)
+            }catch(e){
+                reject(e)
+            }
+        })
     }
 
     /**
@@ -53,19 +59,25 @@ class KeyPair{
      * @param {String} enconded - Encrypted String
      * @returns {String} Decrypted String
      */
-    decrypt(encoded){
+    async decrypt(encoded){
         if(!encoded) throw new Error("No argument was passed");
         if(typeof encoded != "string") throw new Error("Invalid argument type");
         encoded = encoded.split(/\./g);
         if(encoded.length > 3) throw new Error("Corrupted or invalid key")
-        const salt = forge.util.decode64(encoded[2]);
-        const iv = forge.util.decode64(encoded[1]);
-        const key = forge.pkcs5.pbkdf2(this.masterKey, salt, 100e3, 16);
-        const aes = forge.cipher.createDecipher('AES-CBC', key);
-        aes.start({iv});
-        aes.update(forge.util.createBuffer(forge.util.decode64(encoded[0])));
-        aes.finish();
-        return aes.output.data;
+        return new Promise((resolve, reject) => {
+            try{
+                const salt = forge.util.decode64(encoded[2]);
+                const iv = forge.util.decode64(encoded[1]);
+                const key = forge.pkcs5.pbkdf2(this.masterKey, salt, 100e3, 16);
+                const aes = forge.cipher.createDecipher('AES-CBC', key);
+                aes.start({iv});
+                aes.update(forge.util.createBuffer(forge.util.decode64(encoded[0])));
+                aes.finish();
+                resolve(aes.output.data);
+            }catch(e){
+                reject(e);
+            }
+        })
     }
 
     /**
@@ -73,17 +85,23 @@ class KeyPair{
      * @param {String} password - password to be used to encrypt the private key.
      * @returns {String} Encrypted private key.
      */
-    encryptKey(password){
+    async encryptKey(password){
         if(!password) throw new Error("No argument was passed");
         if(typeof password != "string") throw new Error("Invalid argument type");
-        const salt = forge.random.getBytesSync(16);
-        const key = forge.pkcs5.pbkdf2(password, salt, 100e3, 16);
-        const aes = forge.cipher.createCipher('AES-CBC', key);
-        const iv = forge.random.getBytesSync(16);
-        aes.start({iv});
-        aes.update(forge.util.createBuffer(this.privateKey));
-        aes.finish();
-        return `${forge.util.encode64(aes.output.data)}.${forge.util.encode64(iv)}.${forge.util.encode64(salt)}}`
+        return new Promise((resolve, reject) => {
+            try{
+            const salt = forge.random.getBytesSync(16);
+            const key = forge.pkcs5.pbkdf2(password, salt, 100e3, 16);
+            const aes = forge.cipher.createCipher('AES-CBC', key);
+            const iv = forge.random.getBytesSync(16);
+            aes.start({iv});
+            aes.update(forge.util.createBuffer(this.privateKey));
+            aes.finish();
+            resolve(`${forge.util.encode64(aes.output.data)}.${forge.util.encode64(iv)}.${forge.util.encode64(salt)}}`);
+            }catch(e){
+                reject(e)
+            }
+        })
     }
 
     /**
@@ -91,14 +109,21 @@ class KeyPair{
      * @param {String} sessionKey - Public key to be computed 
      * @returns {String} Master key shared between 2 KeyPairs
      */
-    computeKey(sessionKey){
+    async computeKey(sessionKey){
         if(!sessionKey) throw new Error("No argument was passed");
         if(typeof sessionKey != "string") throw new Error("Invalid argument type");
-        const pair = curve.keyFromPrivate(this.privateKey);
-        const curveSession = new ec("curve25519");
-        const session = curveSession.keyFromPublic(decodePublic(sessionKey));
-        const publi = session.getPublic();
-        return pair.derive(publi).toString("hex");
+        return new Promise((resolve, reject) => {
+            try{
+                const pair = curve.keyFromPrivate(this.privateKey);
+                const curveSession = new ec("curve25519");
+                const session = curveSession.keyFromPublic(decodePublic(sessionKey));
+                const publi = session.getPublic();
+                resolve(pair.derive(publi).toString("hex"));
+        }catch(e){
+            reject(e);
+        }
+
+        })
     }
 }
 
@@ -109,18 +134,25 @@ class KeyPair{
  * @param {String} password Password that will be used to encrypt the String
  * @returns {String} Encrypted String
  */
-function encryptWithPassword(plaintext, password){
+async function encryptWithPassword(plaintext, password){
     if(!password || !plaintext) throw new Error("Expected 2 arguments");
     if(typeof plaintext != "string") throw new Error("Invalid first argument type");
     if(typeof password != "string") throw new Error("Invalid second argument type");
-    const salt = forge.random.getBytesSync(16);
-    const key = forge.pkcs5.pbkdf2(password, salt, 100e3, 16);
-    const aes = forge.cipher.createCipher('AES-CBC', key);
-    const iv = forge.random.getBytesSync(16);
-    aes.start({iv});
-    aes.update(forge.util.createBuffer(plaintext));
-    aes.finish();
-    return `${forge.util.encode64(aes.output.data)}.${forge.util.encode64(iv)}.${forge.util.encode64(salt)}`;
+    return new Promise((resolve, reject) => {
+        try{
+            const salt = forge.random.getBytesSync(16);
+            const key = forge.pkcs5.pbkdf2(password, salt, 100e3, 16);
+            const aes = forge.cipher.createCipher('AES-CBC', key);
+            const iv = forge.random.getBytesSync(16);
+            aes.start({iv});
+            aes.update(forge.util.createBuffer(plaintext));
+            aes.finish();
+            resolve(`${forge.util.encode64(aes.output.data)}.${forge.util.encode64(iv)}.${forge.util.encode64(salt)}`);
+        }catch(e){
+            reject(e);
+        }
+    })
+    
 }
 
 /**
@@ -134,14 +166,21 @@ function decryptWithPassword(encoded, password){
     if(typeof encoded != "string") throw new Error("Invalid first argument type");
     if(typeof password != "string") throw new Error("Invalid second argument type");
     encoded = encoded.split(/\./g);
-    const salt = forge.util.decode64(encoded[2]);
-    const iv = forge.util.decode64(encoded[1]);
-    const key = forge.pkcs5.pbkdf2(password, salt, 100e3, 16);
-    const aes = forge.cipher.createDecipher('AES-CBC', key);
-    aes.start({iv});
-    aes.update(forge.util.createBuffer(forge.util.decode64(encoded[0])));
-    aes.finish();
-    return aes.output.data; 
+    if(encoded.length > 3) throw new Error("Corrupted or invalid content")
+    return new Promise((resolve, reject) => {
+        try{
+            const salt = forge.util.decode64(encoded[2]);
+            const iv = forge.util.decode64(encoded[1]);
+            const key = forge.pkcs5.pbkdf2(password, salt, 100e3, 16);
+            const aes = forge.cipher.createDecipher('AES-CBC', key);
+            aes.start({iv});
+            aes.update(forge.util.createBuffer(forge.util.decode64(encoded[0])));
+            aes.finish();
+            resolve(aes.output.data); 
+        }catch(e){
+            reject(e)
+        }
+    }) 
 }
 
 /**
@@ -150,9 +189,8 @@ function decryptWithPassword(encoded, password){
  * @param {String} password - Password used to decrypt the key
  * @returns {String} Decrypted private key
  */
-function decryptKey(encoded, password){
-    return decryptWithPassword(encoded, password);
+async function decryptKey(encoded, password){
+    return await decryptWithPassword(encoded, password);
 }
-
 
  module.exports = {decryptKey, KeyPair, encryptWithPassword, decryptWithPassword}
