@@ -1,6 +1,8 @@
 # Daniel 
 
 The standard library for encryption and decryption of Capybara.
+(name refers to [Daniel J. Bernstein](https://en.wikipedia.org/wiki/Daniel_J._Bernstein))
+
 
 ## installation
 
