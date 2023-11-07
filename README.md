@@ -9,17 +9,17 @@ The standard library for encryption and decryption of Capybara.
 
 ### npm
 ```bash
-npm install @capybara-social/daniely
+npm install @capybara-social/daniel
 ```
 
 ### yarn
 ```bash
-yarn add @capybara-social/daniely
+yarn add @capybara-social/daniel
 ```
 
 ### pnpm
 ```bash
-pnpm add @capybara-social/daniely
+pnpm add @capybara-social/daniel
 ```
 
 
