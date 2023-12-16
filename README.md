@@ -1,3 +1,7 @@
+[!CAUTION]
+Deprecated Repository. This project is not in use anymore and will not be updated in case of a security breach or insecure cryptographic practice.
+
+
 # Daniel 
 
 The standard library for encryption and decryption of Capybara.
